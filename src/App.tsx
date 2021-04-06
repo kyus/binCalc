@@ -1,11 +1,12 @@
 import React, {Dispatch, useState} from 'react';
 import './App.css';
-import {Layout, Menu, Row, Col, InputNumber, Button} from "antd";
+import {Layout, Menu, Row, Col, InputNumber, Button, Alert} from "antd";
 import _ from "lodash";
 import {  SettingOutlined } from '@ant-design/icons';
 
 function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
-  const [result, setResult] = useState("확인하려면 변경 버튼을 눌러주세요.");
+  const [result, setResult] = useState("");
+  const [msg, setMsg] = useState("확인하려면 변경 버튼을 눌러주세요.");
   const [from, setFrom] = useState(0);
   const input = React.createRef();
   const progress:{num:string, base:number}[] = [];
@@ -21,9 +22,14 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
     return true;
   }
   const _calcToNaturalNumber = (type:string): number => {
+    if (!from) {
+      setMsg("수를 입력하세요.");
+      return -1
+    }
     const val = from.toString().split("");
     if (!_check(val)) {
-      alert(`${props.origin}진수의 범위를 초과했습니다.\n0~${Number(props.origin)-1}까지의 숫자만 입력하세요.`);
+      setMsg(`${props.origin}진수의 범위를 초과했습니다.\n0~${Number(props.origin)-1}까지의 숫자만 입력하세요.`);
+      return -1;
     }
     const naturalNumber = Number(_.reduce(_.reverse(val), (sum, n, idx) => {
       const unit = Math.pow(parseInt(props.origin), idx);
@@ -41,8 +47,16 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
     } while (naturalNumber > 0);
     return result;
   }
-  const convert = () => {
+  const delay = (time:number) => {
+    return new Promise((res:any)=>{
+      setTimeout(() => {res();}, time);
+    })
+  }
+  const convert = async () => {
+    setMsg("");
+    await delay(300);
     const naturalNumber = _calcToNaturalNumber(props.origin);
+    if (naturalNumber < 0) return false;
     const process = _.map(progress, (v,k) => {
       return <div key={k}></div>
     })
@@ -66,6 +80,7 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
       </Row>
       <Row>
         <Col span={24}>
+          {msg && <Alert message={msg} type={"info"} />}
           <textarea value={result} readOnly={true} style={{border:"none", width:"100%", height: 300}}/>
         </Col>
       </Row>
