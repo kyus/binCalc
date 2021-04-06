@@ -5,7 +5,7 @@ import _ from "lodash";
 import {  SettingOutlined } from '@ant-design/icons';
 
 function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
-  const [result, setResult] = useState("확인하려면 결과 버튼을 눌러주세요.");
+  const [result, setResult] = useState("확인하려면 변경 버튼을 눌러주세요.");
   const [from, setFrom] = useState(0);
   const input = React.createRef();
   const progress:{num:string, base:number}[] = [];
@@ -61,12 +61,12 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
       </Row>
       <Row>
         <Col span={24} style={{marginBottom: 10}}>
-          <Button block={true} icon={<SettingOutlined />} type={"primary"} onClick={convert}>변경</Button>
+          <Button block={true} icon={<SettingOutlined />} type={"primary"} size={"large"} shape={"round"} onClick={convert}>변경</Button>
         </Col>
       </Row>
       <Row>
         <Col span={24}>
-          <textarea value={result} readOnly={true} style={{border:"none", width:"100%", height: 400}}/>
+          <textarea value={result} readOnly={true} style={{border:"none", width:"100%", height: 300}}/>
         </Col>
       </Row>
     </div>
