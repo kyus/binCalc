@@ -1,17 +1,17 @@
-import React, {Dispatch, useState, useRef} from 'react';
+import React, {Dispatch, useRef, useState} from 'react';
 import './App.css';
-import {Layout, Menu, Row, Col, InputNumber, Button, Alert} from "antd";
+import {Alert, Button, Col, InputNumber, Layout, Menu, Row} from "antd";
 import _ from "lodash";
-import {  SettingOutlined } from '@ant-design/icons';
+import {SettingOutlined} from '@ant-design/icons';
 
 function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
-  const [result, setResult] = useState("");
+  const defaultResultMsg = "이곳에 결과가 표시 됩니다.";
+  const [result, setResult] = useState(defaultResultMsg);
   const [msg, setMsg] = useState("확인하려면 변경 버튼을 눌러주세요.");
   const [from, setFrom] = useState(0);
   const input = useRef<HTMLInputElement>(null);
-  const progress:{num:string, base:number}[] = [];
+  const progress:{num:string, power:number}[] = [];
   const onChange = (val:number) => {
-    console.log('input', input);
     setFrom(val);
   }
   const _check = (val:string[]):boolean => {
@@ -26,16 +26,22 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
     if (!from) {
       setMsg("수를 입력하세요.");
       if(input && input.current) input.current.focus();
+      setResult(defaultResultMsg);
       return -1;
     }
     const val = from.toString().split("");
     if (!_check(val)) {
       setMsg(`${props.origin}진수의 범위를 초과했습니다.\n0~${Number(props.origin)-1}까지의 숫자만 입력하세요.`);
       if(input && input.current) input.current.focus();
+      setResult(defaultResultMsg);
       return -1;
     }
     const naturalNumber = Number(_.reduce(_.reverse(val), (sum, n, idx) => {
       const unit = Math.pow(parseInt(props.origin), idx);
+      if (idx===1) {
+        progress.push({num:sum, power:0});
+      }
+      progress.push({num:n, power:idx});
       const result = parseInt(sum) + parseInt(n)*unit;
       return result.toString();
     }));
@@ -60,12 +66,31 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
     await delay(300);
     const naturalNumber = _calcToNaturalNumber(props.origin);
     if (naturalNumber < 0) return false;
-    const process = _.map(progress, (v,k) => {
-      return <div key={k} />
-    })
     const res = (props.dest === "10") ? naturalNumber : _calcToBaseN(naturalNumber);
 
-    setResult(`${props.origin}진수 ${from}을 ${props.dest}진수로 변경하면\n${process}\n-> ${res}`);
+    const process = _.map(_.reverse(progress), (v,k) => {
+      return `${v.num}^${v.power}`;
+    });
+    _.map(progress, (v) => progress.pop());
+
+    setResult(`${props.origin}진수 ${from}을 ${props.dest}진수로 변경하면\n\n${process.join('||')}\n\n-> ${res}`);
+  }
+  const nl2br = (str:string) => {
+    const _convertSup = (s:string) => {
+      const processArr = s.split('||');
+      if (processArr[1]) {
+        return _.map(processArr, (v,k) => {
+          const [num, power] = v.split('^');
+          const plus = (k === processArr.length - 1) ? '' : ' + ';
+          return <span key={k}>({num} x {props.origin}<sup>{power}</sup>){plus}</span>
+        })
+      } else {
+        return <div style={{minHeight: 30}}>{s}</div>;
+      }
+    }
+    return _.map(str.split("\n"), (v,i)=>{
+      return <div key={i}>{_convertSup(v)}</div>
+    })
   }
   return (<div style={{padding:"10px"}}>
     <div style={{padding:10}}>{`${props.origin}진법을 ${props.dest}진법으로 바꿉니다.`}</div>
@@ -92,7 +117,8 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
       <Row>
         <Col span={24}>
           {msg && <Alert message={msg} type={"info"} />}
-          <textarea value={result} readOnly={true} style={{border:"none", width:"100%", height: 300}}/>
+          {/*<textarea value={result} readOnly={true} style={{border:"none", width:"100%", height: 300}}/>*/}
+          <div style={{textAlign:"left", border:"1px solid #ddd", padding:10}}>{nl2br(result)}</div>
         </Col>
       </Row>
     </div>
