@@ -1,4 +1,4 @@
-import React, {Dispatch, useState} from 'react';
+import React, {Dispatch, useState, useRef} from 'react';
 import './App.css';
 import {Layout, Menu, Row, Col, InputNumber, Button, Alert} from "antd";
 import _ from "lodash";
@@ -8,9 +8,10 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
   const [result, setResult] = useState("");
   const [msg, setMsg] = useState("확인하려면 변경 버튼을 눌러주세요.");
   const [from, setFrom] = useState(0);
-  const input = React.createRef();
+  const input = useRef<HTMLInputElement>(null);
   const progress:{num:string, base:number}[] = [];
   const onChange = (val:number) => {
+    console.log('input', input);
     setFrom(val);
   }
   const _check = (val:string[]):boolean => {
@@ -24,11 +25,13 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
   const _calcToNaturalNumber = (type:string): number => {
     if (!from) {
       setMsg("수를 입력하세요.");
-      return -1
+      if(input && input.current) input.current.focus();
+      return -1;
     }
     const val = from.toString().split("");
     if (!_check(val)) {
       setMsg(`${props.origin}진수의 범위를 초과했습니다.\n0~${Number(props.origin)-1}까지의 숫자만 입력하세요.`);
+      if(input && input.current) input.current.focus();
       return -1;
     }
     const naturalNumber = Number(_.reduce(_.reverse(val), (sum, n, idx) => {
@@ -58,7 +61,7 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
     const naturalNumber = _calcToNaturalNumber(props.origin);
     if (naturalNumber < 0) return false;
     const process = _.map(progress, (v,k) => {
-      return <div key={k}></div>
+      return <div key={k} />
     })
     const res = (props.dest === "10") ? naturalNumber : _calcToBaseN(naturalNumber);
 
@@ -70,7 +73,15 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
       <Row>
         <Col span={8}>{props.origin}진수 입력</Col>
         <Col span={12} style={{textAlign:"left"}}>
-          <InputNumber min={0} onChange={onChange} style={{width:200, marginBottom:10}} type={"number"} pattern="[0-9]*"/>
+          <InputNumber
+            ref={input}
+            min={0}
+            onChange={onChange}
+            style={{width:200, marginBottom:10}}
+            type={"number"}
+            pattern="[0-9]*"
+            autoFocus={true}
+          />
         </Col>
       </Row>
       <Row>
