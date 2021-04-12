@@ -11,9 +11,12 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
   const [from, setFrom] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const progress:{num:string, power:number}[] = [];
+  const baseNProcess:{num:string, value:number, remainder:number}[] = [];
+
   const onChange = (val:number) => {
     setFrom(val);
   }
+
   const _check = (val:string[]):boolean => {
     for(let v of val) {
       if (Number(v) >= Number(props.origin)) {
@@ -22,6 +25,7 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
     }
     return true;
   }
+
   const _calcToNaturalNumber = (type:string): number => {
     if (!from) {
       setMsg("수를 입력하세요.");
@@ -29,6 +33,7 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
       setResult(defaultResultMsg);
       return -1;
     }
+
     const val = from.toString().split("");
     if (!_check(val)) {
       setMsg(`${props.origin}진수의 범위를 초과했습니다.\n0~${Number(props.origin)-1}까지의 숫자만 입력하세요.`);
@@ -36,17 +41,21 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
       setResult(defaultResultMsg);
       return -1;
     }
+
     const naturalNumber = Number(_.reduce(_.reverse(val), (sum, n, idx) => {
       const unit = Math.pow(parseInt(props.origin), idx);
-      if (idx===1) {
-        progress.push({num:sum, power:0});
+      if (props.origin !== "10") {
+        if (idx === 1) {
+          progress.push({num: sum, power: 0});
+        }
+        progress.push({num: n, power: idx});
       }
-      progress.push({num:n, power:idx});
       const result = parseInt(sum) + parseInt(n)*unit;
       return result.toString();
     }));
     return naturalNumber;
   }
+
   const _calcToBaseN = (naturalNumber:number): any => {
     const baseN = Number(props.dest);
     let result = "";
@@ -56,11 +65,17 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
     } while (naturalNumber > 0);
     return result;
   }
+
+  const _baseNProcess = (naturalNumber:number):string => {
+    return `\n-> ${naturalNumber}\n\n이 10진수 ${naturalNumber}를 ${props.dest}진수로 바꾼다.\n${baseNProcess}`;
+  }
+
   const delay = (time:number) => {
     return new Promise((res:any)=>{
       setTimeout(() => {res();}, time);
     })
   }
+
   const convert = async () => {
     setMsg("");
     await delay(300);
@@ -68,13 +83,16 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
     if (naturalNumber < 0) return false;
     const res = (props.dest === "10") ? naturalNumber : _calcToBaseN(naturalNumber);
 
-    const process = _.map(_.reverse(progress), (v,k) => {
+    const process = _.map(_.reverse(progress), (v) => {
       return `${v.num}^${v.power}`;
     });
-    _.map(progress, (v) => progress.pop());
+    _.map(progress, () => progress.pop());
+    const prefix = (props.origin === "10" || props.dest === "10") ? '' : `일단 ${props.origin}진수를 10진수로 바꾼다.\n`;
+    const after = (props.dest === "10") ? '' : _baseNProcess(naturalNumber);
 
-    setResult(`${props.origin}진수 ${from}을 ${props.dest}진수로 변경하면\n\n${process.join('||')}\n\n-> ${res}`);
+    setResult(`${props.origin}진수 ${from}을 ${props.dest}진수로 변경하면\n\n${prefix}${process.join('||')}${after}\n\n-> ${res}`);
   }
+
   const nl2br = (str:string) => {
     const _convertSup = (s:string) => {
       const processArr = s.split('||');
@@ -92,6 +110,7 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
       return <div key={i}>{_convertSup(v)}</div>
     })
   }
+
   return (<div style={{padding:"10px"}}>
     <div style={{padding:10}}>{`${props.origin}진법을 ${props.dest}진법으로 바꿉니다.`}</div>
     <div>
@@ -118,7 +137,7 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
         <Col span={24}>
           {msg && <Alert message={msg} type={"info"} />}
           {/*<textarea value={result} readOnly={true} style={{border:"none", width:"100%", height: 300}}/>*/}
-          <div style={{textAlign:"left", border:"1px solid #ddd", padding:10}}>{nl2br(result)}</div>
+          <div style={{textAlign:"left", border:"1px solid #ddd", padding:10, background:"#fff"}}>{nl2br(result)}</div>
         </Col>
       </Row>
     </div>
