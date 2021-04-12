@@ -1,4 +1,4 @@
-import React, {Dispatch, useRef, useState} from 'react';
+import React, {Dispatch, KeyboardEvent, useRef, useState} from 'react';
 import './App.css';
 import {Alert, Button, Col, InputNumber, Layout, Menu, Row} from "antd";
 import _ from "lodash";
@@ -15,6 +15,13 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
 
   const onChange = (val:number) => {
     setFrom(val);
+  }
+
+  const onKeyPress = (e:KeyboardEvent<HTMLInputElement>) => {
+    const {charCode, code} = e;
+    if (charCode === 13 || code === "Enter") {
+      convert();
+    }
   }
 
   const _check = (val:string[]):boolean => {
@@ -67,7 +74,7 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
   }
 
   const _baseNProcess = (naturalNumber:number):string => {
-    return `\n-> ${naturalNumber}\n\n이 10진수 ${naturalNumber}를 ${props.dest}진수로 바꾼다.\n${baseNProcess}`;
+    return `\n-> ${naturalNumber}\n\n이 10진수 ${naturalNumber}(을)를 ${props.dest}진수로 바꾼다.\n${baseNProcess}`;
   }
 
   const delay = (time:number) => {
@@ -121,6 +128,7 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
             ref={input}
             min={0}
             onChange={onChange}
+            onKeyPress={onKeyPress}
             style={{width:200, marginBottom:10}}
             type={"number"}
             pattern="[0-9]*"
@@ -136,7 +144,6 @@ function Body(props:{origin:string, dest:string, setDest:Dispatch<string>}) {
       <Row>
         <Col span={24}>
           {msg && <Alert message={msg} type={"info"} />}
-          {/*<textarea value={result} readOnly={true} style={{border:"none", width:"100%", height: 300}}/>*/}
           <div style={{textAlign:"left", border:"1px solid #ddd", padding:10, background:"#fff"}}>{nl2br(result)}</div>
         </Col>
       </Row>
